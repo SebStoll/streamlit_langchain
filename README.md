@@ -26,7 +26,7 @@ Project template to quickly setup experiments with Streamlit and Langchain.
     ```
 
 ## Usage
-1. From the project root, run the Streamlit app: `streamlit run streamlit_langchain/app.py`
+1. From the project root, run the Streamlit app: `streamlit run src/app/app.py`
 2. Follow the on-screen instructions to perform various tasks.
 3. Modify the `config.py` file to customize settings.
 

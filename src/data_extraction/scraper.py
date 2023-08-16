@@ -1,10 +1,10 @@
-import requests
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
-
 
 def scrape_text(url):
     """
-    Extracts all the visible text from the body of the webpage specified by the URL.
+    Extracts all the visible text from the body of the webpage specified by the URL using browser automation.
 
     Args:
         url (str): The URL of the webpage to scrape.
@@ -12,22 +12,23 @@ def scrape_text(url):
     Returns:
         str: The extracted text from the webpage.
     """
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Referer': 'https://www.google.com/'  # Set the Referer header to mimic a typical browser request
-    }
+    # Set Chrome options to run headless (without GUI)
+    options = Options()
+    options.add_argument('--headless') # Use this line instead of options.headless = True
     
-    # Create a session to handle cookies and session data automatically
-    with requests.Session() as session:
-        session.headers.update(headers)
-        response = session.get(url)
+    # Create a new Chrome browser instance
+    with webdriver.Chrome(options=options) as driver:
+        # Open the specified URL
+        driver.get(url)
+        
+        # Wait for the page to load completely
+        driver.implicitly_wait(10)
+        
+        # Get the page source (HTML content)
+        page_source = driver.page_source
     
-    if response.status_code != 200:
-        print(f"Failed to retrieve the webpage. Status code: {response.status_code}")
-        return None
-
     # Parse the HTML content with BeautifulSoup
-    soup = BeautifulSoup(response.content, 'html.parser')
+    soup = BeautifulSoup(page_source, 'html.parser')
 
     # Extract all the text within the page's <body> tag
     body = soup.find('body')
@@ -36,9 +37,10 @@ def scrape_text(url):
     return text
 
 
-
 if __name__ == "__main__":
-    url = "https://www.immobilienscout24.de/Suche/de/bayern/muenchen/wohnung-mieten"  # Replace with the URL of the website you want to scrape
+    #url = "https://www.kdnuggets.com/2023/08/5-ways-chatgpt-code-interpreter-data-science.html"
+    #url = "https://www.immobilienscout24.de/Suche/de/bayern/muenchen/wohnung-mieten"
+    url = "https://www.immowelt.de/liste/muenchen/wohnungen/mieten?sort=relevanz"
     text = scrape_text(url)
     if text:
         print(text)

@@ -7,5 +7,7 @@ setup(
     install_requires=[
         "streamlit",
         "openai",
+        "beautifulsoup4",
+        "selenium",
     ],
 )

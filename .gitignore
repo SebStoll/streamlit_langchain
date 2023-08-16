@@ -116,3 +116,5 @@ Thumbs.db
 
 # Project specific
 credentials.json
+data/raw/*
+data/processed/*

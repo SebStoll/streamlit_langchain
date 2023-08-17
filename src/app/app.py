@@ -4,6 +4,11 @@ import streamlit as st
 import openai
 import json
 from src.data_processing.processor import process_data
+from langchain.chains.llm import LLMChain
+from langchain.prompts import PromptTemplate, ChatPromptTemplate
+from langchain.chat_models import ChatOpenAI
+from langchain.prompts.chat import SystemMessage, HumanMessagePromptTemplate
+
 
 # Set OpenAI API key
 with open('credentials.json') as f:
@@ -13,32 +18,44 @@ openai.api_key = open_ai_api_key
 
 
 ### OPTION 3
-def get_openai_response(prompt):
-    """Gets an AI-generated response from Bard."""
-    client = openai.ChatCompletion()
-    response = client.create(
-        model="gpt-3.5-turbo", 
-    messages=[
-        {
-            "role": "system", 
-            "content": (
-                "Nimm an, dass du ein deutscher Immobilienexperte bist."
-                "Du erhältst gescrapten Text von einer Website."
-                "Deine Aufgabe ist es, die auf dieser Website aufgeführten Immobilienangebote zusammenzufassen."
-                "Fasse dich dabei kurz, aber stelle für jede Immobilie die wichtigsten Punkte heraus."
-                "Die Ausgabe deiner Antwort sollte übersichtlich sein."
-                "Starte deine Antwort mit einer kurzen Zusammenfassung dazu, wieviele Objekte es gibt."
-                "Sollte es sich bei der Website nicht um ein Immobilienportal handeln, sage das dem User"
-                "und fasse sehr kurz zusammen, was es stattdessen ist."
-            )
-        },
-        {
-            "role": "user", 
-            "content": prompt
-        }
-    ],
+def get_openai_response(processed_text):
+    # Define prompt
+
+    template = ChatPromptTemplate.from_messages(
+        [
+            SystemMessage(
+                content=(
+                    "You are a helpful assistant that re-writes the user's text to "
+                    "Nimm an, dass du ein deutscher Immobilienexperte bist."
+                    "Du erhältst gescrapten Text von einer Website."
+                    "Du erhältst gescrapten Text von einer Website."
+                    "Deine Aufgabe ist es, die auf dieser Website aufgeführten Immobilienangebote zusammenzufassen."
+                    "Fasse dich dabei kurz, aber stelle für jede Immobilie die wichtigsten Punkte heraus."
+                    "Die Ausgabe deiner Antwort sollte übersichtlich sein."
+                    "Starte deine Antwort mit einer kurzen Zusammenfassung dazu, wieviele Objekte es gibt."
+                    "Sollte es sich bei der Website nicht um ein Immobilienportal handeln, sage das dem User"
+                    "und fasse sehr kurz zusammen, was es stattdessen ist."
+                )
+            ),
+            HumanMessagePromptTemplate.from_template(
+                "Fasse die folgenden Immobilienangebote kurz und prägnant zusammen: {text}"
+            ),
+        ]
     )
-    return response['choices'][0]['message']['content']
+
+    messages = template.format_messages(text=processed_text)
+
+    # Define LLM chain
+    llm = ChatOpenAI(temperature=0.7, model_name="gpt-3.5-turbo", openai_api_key=openai.api_key)
+    response = llm(messages)
+
+
+    #llm_chain = LLMChain(llm=llm, prompt=prompt)
+
+    # Get response from OpenAI
+    #response = llm_chain.generate()
+
+    return response
 
 
 st.title("Web Scraping and Summarization")
@@ -61,8 +78,6 @@ if url:
 
     with st.spinner('Scraping and summarizing the content...'):
         processed_text = process_data(url)
-
-        prompt = f"Fasse die Immobilienangebote kurz und prägnant zusammen:\n{processed_text}"
-        summary = get_openai_response(prompt)
+        summary = get_openai_response(processed_text)
     
-    st.write(f"Answer: {summary}")
+    st.write(f"Answer: {summary.content}")
